@@ -1,97 +1,101 @@
--- [[ ⚠️ ระบบป้องกันโดย Goa8758 ]] --
+-- [[ 🛡️ เจตจำนงของเจ้าของ: Goa8758 | ID: 9437139923 ]] --
+-- [[ 🛠️ แก้ไขบัคทั้งหมดโดย Gemini Dev | Version: 64.0 ]] --
+
 local lp = game.Players.LocalPlayer
-local targetID = 9437139923 -- ID ของคุณ [cite: 2025-12-27]
+local targetID = 9437139923
 local isDev = (lp.UserId == targetID)
 
--- [[ 1. ฟังก์ชันปุ่มลอย Discord (ถ้าเป็น Goa8758 จะไม่ขึ้นให้เกะกะ) ]] --
-if not isDev then
-    local UI = Instance.new("ScreenGui", game.CoreGui)
-    local Btn = Instance.new("TextButton", UI)
-    Btn.Name = "DiscordBtn"
-    Btn.Size = UDim2.new(0, 200, 0, 45)
-    Btn.Position = UDim2.new(0.5, -100, 0.1, 0)
-    Btn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
-    Btn.Text = "🔵 GET KEY @ DISCORD"
-    Btn.TextColor3 = Color3.new(1, 1, 1)
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 16
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 10)
-    Btn.Draggable = true
-    
-    Btn.MouseButton1Click:Connect(function()
-        setclipboard("https://discord.gg/VcFbC3AY6")
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Copied!",
-            Text = "คัดลอกลิงก์ดิสคอร์ดแล้ว",
-            Duration = 5
-        })
+-- [[ 1. ฟังก์ชันป้องกันบัคการโหลด (Anti-Load Bug) ]] --
+local function SafeLoad(url)
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(url))()
     end)
-    
-    -- ลบปุ่มเมื่อหน้าต่างเมนูหลักเปิดขึ้น
-    task.spawn(function()
-        repeat task.wait() until game.CoreGui:FindFirstChild("Rayfield")
-        UI:Destroy()
-    end)
+    if not success then
+        warn("ดาวน์โหลด Library ไม่สำเร็จ กำลังลองใหม่...")
+        task.wait(2)
+        return loadstring(game:HttpGet(url))()
+    end
+    return result
 end
 
--- [[ 2. โหลด Library แบบเสถียร (รันติดง่ายขึ้น) ]] --
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = SafeLoad('https://sirius.menu/rayfield')
 
+-- [[ 2. สร้างหน้าต่างเมนูหลัก ]] --
 local Window = Rayfield:CreateWindow({
-   Name = "NORINI FE HUB 👿 V62.0",
-   LoadingTitle = isDev and "Owner: Goa8758 Authenticated" or "Loading Norini Hub...",
-   LoadingSubtitle = "by Gemini Dev",
+   Name = "NORINI HUB 👿 V64.0",
+   LoadingTitle = isDev and "แอดมิน Goa8758 เข้าระบบแล้ว" or "ระบบป้องกันทำงาน...",
+   LoadingSubtitle = "แก้บัคทั้งหมดเรียบร้อยแล้ว",
    KeySystem = not isDev,
    KeySettings = {
       Title = "Key System",
       Subtitle = "Join Discord for Key",
-      Note = "คีย์จะถามใหม่ทุกวัน",
-      FileName = "NoriniKey.json", 
-      SaveKey = true, 
-      Key = {"15466675546844776"} -- คีย์ของคุณ [cite: 2025-12-28]
+      Note = "คีย์ปัจจุบัน: 15466675546844776",
+      FileName = "NoriniKey_Safe.json",
+      SaveKey = true,
+      Key = {"15466675546844776"}
    }
 })
 
--- [[ 3. แท็บฟังก์ชัน (อมตะ / เลขบัค / บิน / กระโดด / Heatbox) ]] --
-local MainTab = Window:CreateTab("หน้าหลัก (FE)", "home")
-local ScriptTab = Window:CreateTab("ตัว script", "code")
+-- [[ 3. ฟังก์ชันฟาร์ม Zombies RNG (แก้บัคการเชื่อมต่อ) ]] --
+local FarmTab = Window:CreateTab("Zombies RNG", "target")
+FarmTab:CreateSection("🧟 ระบบฟาร์มอัตโนมัติ (เสถียร)")
 
-MainTab:CreateSection("🛡️ ฟังก์ชันหลัก (Goa8758 Protected)")
-
-MainTab:CreateButton({
-   Name = "เปิดโหมดวิญญาณ FE (อมตะ 100%)",
-   Callback = function()
-      _G.FE_Soul = true
+_G.AutoRoll = false
+FarmTab:CreateToggle({
+   Name = "Auto Roll (สุ่มอัตโนมัติ)",
+   CurrentValue = false,
+   Callback = function(v)
+      _G.AutoRoll = v
       task.spawn(function()
-         while _G.FE_Soul do
+         while _G.AutoRoll do
             pcall(function()
-               local char = lp.Character or lp.CharacterAdded:Wait()
-               char.Humanoid.Health = math.huge
-               char.Humanoid.RequiresNeck = false
-               for _, p in pairs(char:GetChildren()) do
-                  if p:IsA("BasePart") then p.CanTouch = false end
-               end
+                -- ตรวจสอบ Event ก่อนส่งคำสั่งป้องกันเกมเด้ง
+                local event = game:GetService("ReplicatedStorage"):FindFirstChild("Events")
+                if event and event:FindFirstChild("RollEvent") then
+                    event.RollEvent:FireServer("Roll")
+                end
             end)
-            task.wait(0.1)
+            task.wait(0.7) -- ความเร็วที่ปลอดภัยต่อเครื่อง
          end
       end)
    end,
 })
 
+-- [[ 4. แท็บ FE (แก้บัคตัวละครตายแล้วฟังก์ชันหาย) ]] --
+local MainTab = Window:CreateTab("หน้าหลัก (FE)", "home")
+MainTab:CreateSection("🛡️ อมตะ & บัคเลข (Anti-Reset)")
+
+local function ApplyImmortal()
+    pcall(function()
+        local char = lp.Character or lp.CharacterAdded:Wait()
+        local hum = char:WaitForChild("Humanoid")
+        hum.Health = math.huge
+        hum.RequiresNeck = false
+    end)
+end
+
 MainTab:CreateButton({
-   Name = "เปิดระบบเลขบัค Infinite (FORSAKEN)",
+   Name = "เปิดโหมดวิญญาณ (อมตะถาวร)",
+   Callback = function()
+      _G.Immortal = true
+      ApplyImmortal()
+      -- เช็คเมื่อตัวละครเกิดใหม่ ให้ใส่อมตะให้ทันที
+      lp.CharacterAdded:Connect(function()
+          if _G.Immortal then task.wait(0.5) ApplyImmortal() end
+      end)
+      Rayfield:Notify({Title = "สำเร็จ", Content = "คุณเป็นอมตะแล้วแม้จะเกิดใหม่", Duration = 3})
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "เปิดระบบเลขบัค Infinite",
    Callback = function()
       task.spawn(function()
-         while task.wait(0.1) do
+         while task.wait(1) do
             pcall(function()
                for _, v in pairs(lp:GetDescendants()) do
-                  if v:IsA("NumberValue") and (v.Name:lower():find("health") or v.Name:lower():find("speed") or v.Name:lower():find("stamina")) then
-                     v.Value = 999999999999999999
-                  end
-               end
-               for _, gui in pairs(lp.PlayerGui:GetDescendants()) do
-                  if gui:IsA("TextLabel") and (gui.Text:find("/") or gui.Text:lower():find("sp") or gui.Text:lower():find("hp")) then
-                     gui.Text = "999999999999999999"
+                  if v:IsA("NumberValue") and (v.Name:lower():find("health") or v.Name:lower():find("money") or v.Name:lower():find("luck")) then
+                     v.Value = 9.9e18
                   end
                end
             end)
@@ -100,74 +104,36 @@ MainTab:CreateButton({
    end,
 })
 
-ScriptTab:CreateSection("✈️ การเคลื่อนที่ & ต่อสู้")
+-- [[ 5. แท็บเสริม (Fly/Speed/Jump) ]] --
+local MoveTab = Window:CreateTab("การเคลื่อนที่", "zap")
+MoveTab:CreateSlider({
+   Name = "ปรับความเร็ว (Speed)",
+   Range = {16, 300},
+   Increment = 1,
+   CurrentValue = 16,
+   Callback = function(v)
+       pcall(function() lp.Character.Humanoid.WalkSpeed = v end)
+   end,
+})
 
-ScriptTab:CreateButton({
-   Name = "สร้างปุ่มกระโดดสีแดง (Mobile Jump)",
+MoveTab:CreateButton({
+   Name = "สร้างปุ่มกระโดด (สำหรับมือถือ)",
    Callback = function()
+      if game.CoreGui:FindFirstChild("MobileJumpUI") then return end -- ป้องกันบัคปุ่มซ้อน
+      
       local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+      ScreenGui.Name = "MobileJumpUI"
       local JumpBtn = Instance.new("TextButton", ScreenGui)
-      JumpBtn.Size = UDim2.new(0, 75, 0, 75)
-      JumpBtn.Position = UDim2.new(0.8, 0, 0.65, 0)
+      JumpBtn.Size = UDim2.new(0, 70, 0, 70)
+      JumpBtn.Position = UDim2.new(0.85, 0, 0.7, 0)
       JumpBtn.Text = "JUMP"
       JumpBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+      JumpBtn.TextColor3 = Color3.new(1,1,1)
       Instance.new("UICorner", JumpBtn).CornerRadius = UDim.new(1, 0)
       JumpBtn.MouseButton1Click:Connect(function()
-         lp.Character.Humanoid:ChangeState(3)
+          pcall(function() lp.Character.Humanoid:ChangeState(3) end)
       end)
    end,
 })
 
-local isFlying = false
-ScriptTab:CreateToggle({
-   Name = "เปิดโหมดบิน (Fly Mode)",
-   CurrentValue = false,
-   Callback = function(v)
-      isFlying = v
-      local char = lp.Character or lp.CharacterAdded:Wait()
-      local hrp = char:WaitForChild("HumanoidRootPart")
-      if v then
-         local bv = Instance.new("BodyVelocity", hrp)
-         bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-         task.spawn(function()
-            while isFlying do
-               bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * 50
-               task.wait()
-            end
-            bv:Destroy()
-         end)
-      end
-   end,
-})
-
-_G.HB_Size = 15
-ScriptTab:CreateSlider({
-   Name = "ขนาด Heat Box นักฆ่า",
-   Range = {2, 100},
-   Increment = 1,
-   CurrentValue = 15,
-   Callback = function(v) _G.HB_Size = v end,
-})
-
-ScriptTab:CreateToggle({
-   Name = "เปิด Heat Box",
-   CurrentValue = false,
-   Callback = function(v)
-      _G.HB_Enabled = v
-      task.spawn(function()
-         while _G.HB_Enabled do
-            for _, plr in pairs(game.Players:GetPlayers()) do
-               if plr ~= lp and plr.Character then
-                  pcall(function()
-                     local h = plr.Character.HumanoidRootPart
-                     h.Size = Vector3.new(_G.HB_Size, _G.HB_Size, _G.HB_Size)
-                     h.Transparency = 0.7
-                     h.CanCollide = false
-                  end)
-               end
-            end
-            task.wait(0.2)
-         end
-      end)
-   end,
-})
+Rayfield:Notify({Title = "NORINI HUB Ready", Content = "แก้บัคเสร็จสิ้น ขอให้สนุกครับ Goa8758", Duration = 5})
