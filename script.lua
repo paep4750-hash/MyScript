@@ -1,46 +1,82 @@
--- [[ 🛡️ เจตจำนงของเจ้าของ: Goa8758 | ID: 9437139923 ]] --
--- [[ 🛠️ แก้ไขบัคทั้งหมดโดย Gemini Dev | Version: 64.0 ]] --
+-- [[ 🛡️ NORINI HUB V65.0 | FPS MOTION & ZOMBIE RNG ]] --
+-- [[ Owner: Goa8758 | UserID: 9437139923 ]] --
 
 local lp = game.Players.LocalPlayer
+local mouse = lp:GetMouse()
 local targetID = 9437139923
 local isDev = (lp.UserId == targetID)
 
--- [[ 1. ฟังก์ชันป้องกันบัคการโหลด (Anti-Load Bug) ]] --
-local function SafeLoad(url)
-    local success, result = pcall(function()
-        return loadstring(game:HttpGet(url))()
-    end)
-    if not success then
-        warn("ดาวน์โหลด Library ไม่สำเร็จ กำลังลองใหม่...")
-        task.wait(2)
-        return loadstring(game:HttpGet(url))()
-    end
-    return result
-end
+-- [[ 🛠️ ระบบป้องกันการเด้งและโหลด Library ]] --
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local Rayfield = SafeLoad('https://sirius.menu/rayfield')
-
--- [[ 2. สร้างหน้าต่างเมนูหลัก ]] --
 local Window = Rayfield:CreateWindow({
-   Name = "NORINI HUB 👿 V64.0",
-   LoadingTitle = isDev and "แอดมิน Goa8758 เข้าระบบแล้ว" or "ระบบป้องกันทำงาน...",
-   LoadingSubtitle = "แก้บัคทั้งหมดเรียบร้อยแล้ว",
+   Name = "NORINI HUB 👿 V65.0",
+   LoadingTitle = isDev and "แอดมิน Goa8758 เข้าระบบแล้ว" or "FPS Motion & RNG Hub",
+   LoadingSubtitle = "Aimbot & ESP Edition",
    KeySystem = not isDev,
    KeySettings = {
-      Title = "Key System",
-      Subtitle = "Join Discord for Key",
-      Note = "คีย์ปัจจุบัน: 15466675546844776",
-      FileName = "NoriniKey_Safe.json",
+      Title = "ระบบยืนยันคีย์",
+      Subtitle = "คีย์ของคุณคือ: 15466675546844776",
+      Note = "คีย์นี้ใช้ได้เฉพาะกลุ่มเพื่อน Goa8758",
       SaveKey = true,
       Key = {"15466675546844776"}
    }
 })
 
--- [[ 3. ฟังก์ชันฟาร์ม Zombies RNG (แก้บัคการเชื่อมต่อ) ]] --
-local FarmTab = Window:CreateTab("Zombies RNG", "target")
-FarmTab:CreateSection("🧟 ระบบฟาร์มอัตโนมัติ (เสถียร)")
+-- [[ 🎯 แท็บแฮก FPS (Aimbot & ESP) ]] --
+local FPSTab = Window:CreateTab("FPS แฮก", "crosshair")
+FPSTab:CreateSection("🎯 ระบบล็อคเป้า (Aimbot)")
 
-_G.AutoRoll = false
+_G.AimbotEnabled = false
+FPSTab:CreateToggle({
+   Name = "เปิดระบบ Aimbot (ล็อคเป้าอัตโนมัติ)",
+   CurrentValue = false,
+   Callback = function(v)
+      _G.AimbotEnabled = v
+   end,
+})
+
+-- ระบบล็อคเป้าเบื้องหลัง
+game:GetService("RunService").RenderStepped:Connect(function()
+    if _G.AimbotEnabled then
+        local target = nil
+        local dist = math.huge
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+                if onScreen then
+                    local mag = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
+                    if mag < dist then
+                        dist = mag
+                        target = player.Character.HumanoidRootPart
+                    end
+                end
+            end
+        end
+        if target then
+            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Position)
+        end
+    end
+end)
+
+FPSTab:CreateSection("👁️ ระบบมองทะลุ (ESP)")
+FPSTab:CreateButton({
+   Name = "เปิด ESP (มองทะลุคนอื่น)",
+   Callback = function()
+      for _, player in pairs(game.Players:GetPlayers()) do
+          if player ~= lp and player.Character then
+              local highlight = Instance.new("Highlight")
+              highlight.Parent = player.Character
+              highlight.FillColor = Color3.fromRGB(255, 0, 0)
+              highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+          end
+      end
+      Rayfield:Notify({Title = "สำเร็จ", Content = "เปิดมองทะลุคนในเซิร์ฟเวอร์แล้ว", Duration = 3})
+   end,
+})
+
+-- [[ 🧟 แท็บฟาร์ม Zombies RNG ]] --
+local FarmTab = Window:CreateTab("Zombies RNG", "skull")
 FarmTab:CreateToggle({
    Name = "Auto Roll (สุ่มอัตโนมัติ)",
    CurrentValue = false,
@@ -49,91 +85,30 @@ FarmTab:CreateToggle({
       task.spawn(function()
          while _G.AutoRoll do
             pcall(function()
-                -- ตรวจสอบ Event ก่อนส่งคำสั่งป้องกันเกมเด้ง
-                local event = game:GetService("ReplicatedStorage"):FindFirstChild("Events")
-                if event and event:FindFirstChild("RollEvent") then
-                    event.RollEvent:FireServer("Roll")
-                end
+                game:GetService("ReplicatedStorage").Events.RollEvent:FireServer("Roll")
             end)
-            task.wait(0.7) -- ความเร็วที่ปลอดภัยต่อเครื่อง
+            task.wait(1)
          end
       end)
    end,
 })
 
--- [[ 4. แท็บ FE (แก้บัคตัวละครตายแล้วฟังก์ชันหาย) ]] --
-local MainTab = Window:CreateTab("หน้าหลัก (FE)", "home")
-MainTab:CreateSection("🛡️ อมตะ & บัคเลข (Anti-Reset)")
-
-local function ApplyImmortal()
-    pcall(function()
-        local char = lp.Character or lp.CharacterAdded:Wait()
-        local hum = char:WaitForChild("Humanoid")
-        hum.Health = math.huge
-        hum.RequiresNeck = false
-    end)
-end
-
+-- [[ 🛡️ แท็บ FE & แก้บัค ]] --
+local MainTab = Window:CreateTab("หน้าหลัก (FE)", "shield")
 MainTab:CreateButton({
-   Name = "เปิดโหมดวิญญาณ (อมตะถาวร)",
+   Name = "เปิดโหมดอมตะ (God Mode)",
    Callback = function()
-      _G.Immortal = true
-      ApplyImmortal()
-      -- เช็คเมื่อตัวละครเกิดใหม่ ให้ใส่อมตะให้ทันที
-      lp.CharacterAdded:Connect(function()
-          if _G.Immortal then task.wait(0.5) ApplyImmortal() end
+      pcall(function()
+          lp.Character.Humanoid.Health = math.huge
       end)
-      Rayfield:Notify({Title = "สำเร็จ", Content = "คุณเป็นอมตะแล้วแม้จะเกิดใหม่", Duration = 3})
+      Rayfield:Notify({Title = "สำเร็จ", Content = "คุณเป็นอมตะแล้ว", Duration = 3})
    end,
 })
 
-MainTab:CreateButton({
-   Name = "เปิดระบบเลขบัค Infinite",
-   Callback = function()
-      task.spawn(function()
-         while task.wait(1) do
-            pcall(function()
-               for _, v in pairs(lp:GetDescendants()) do
-                  if v:IsA("NumberValue") and (v.Name:lower():find("health") or v.Name:lower():find("money") or v.Name:lower():find("luck")) then
-                     v.Value = 9.9e18
-                  end
-               end
-            end)
-         end
-      end)
-   end,
-})
-
--- [[ 5. แท็บเสริม (Fly/Speed/Jump) ]] --
-local MoveTab = Window:CreateTab("การเคลื่อนที่", "zap")
-MoveTab:CreateSlider({
+MainTab:CreateSlider({
    Name = "ปรับความเร็ว (Speed)",
-   Range = {16, 300},
+   Range = {16, 500},
    Increment = 1,
    CurrentValue = 16,
-   Callback = function(v)
-       pcall(function() lp.Character.Humanoid.WalkSpeed = v end)
-   end,
+   Callback = function(v) pcall(function() lp.Character.Humanoid.WalkSpeed = v end) end,
 })
-
-MoveTab:CreateButton({
-   Name = "สร้างปุ่มกระโดด (สำหรับมือถือ)",
-   Callback = function()
-      if game.CoreGui:FindFirstChild("MobileJumpUI") then return end -- ป้องกันบัคปุ่มซ้อน
-      
-      local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-      ScreenGui.Name = "MobileJumpUI"
-      local JumpBtn = Instance.new("TextButton", ScreenGui)
-      JumpBtn.Size = UDim2.new(0, 70, 0, 70)
-      JumpBtn.Position = UDim2.new(0.85, 0, 0.7, 0)
-      JumpBtn.Text = "JUMP"
-      JumpBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-      JumpBtn.TextColor3 = Color3.new(1,1,1)
-      Instance.new("UICorner", JumpBtn).CornerRadius = UDim.new(1, 0)
-      JumpBtn.MouseButton1Click:Connect(function()
-          pcall(function() lp.Character.Humanoid:ChangeState(3) end)
-      end)
-   end,
-})
-
-Rayfield:Notify({Title = "NORINI HUB Ready", Content = "แก้บัคเสร็จสิ้น ขอให้สนุกครับ Goa8758", Duration = 5})
